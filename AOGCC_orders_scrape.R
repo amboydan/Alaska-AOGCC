@@ -7,20 +7,24 @@
 # netstat -ano | findstr :4567
 # taskkill /pid <what you found> /F 
 
+#setwd("O:/Alaska/Depts/Kenai/OptEng/drt/Well_Integrity/AOGCC Orders Scrape")
+
 library(tidyverse)
 library(RSelenium)
 library(rvest)
 library(netstat)
 library(data.table)
 
-setwd("O:/Alaska/Depts/Kenai/OptEng/drt/Well_Integrity/AOGCC Orders Scrape")
-
+aogcc_orders_scrape <- function(){
 rs_driver_object <- rsDriver(browser = 'chrome',
                              chromever = '137.0.7151.55',
-                             version = 'latest')#,
-                             # port = 63113L)
+                             phantomver = NULL,
+                             version = 'latest',
+                             port = netstat::free_port(random = T))
+
+
 remDr <- rs_driver_object$client
-remDr$open()
+# remDr$open()
 remDr$navigate('http://aogweb.state.ak.us/WebLinkSearch')
 
 # All AOGCC Orders
@@ -52,6 +56,12 @@ href <- read_html(data_table_html |> unlist()) |>
   html_nodes('a') |> 
   html_attr('href')
 
+# Close the port
+remDr$close()
+
+# stop the Selenium server
+rs_driver_object$server$stop()
+
 df[['href']] <- href
 
 names(df) <- c('Name', 'Active', 'Date', 
@@ -71,3 +81,8 @@ df <- df |>
   Pools = gsub('.*Pools:', '', Field_Pools),
   Pools = trimws(gsub('Pools:', '', Pools))
 ) |> select(-Field_Pools)
+
+return(df)
+}
+
+
