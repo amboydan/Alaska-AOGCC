@@ -9,22 +9,22 @@ if(exists('aogcc_rules')) {
 
 
 aogcc_rules_stats <- function(rls){
-  
+    # Parse out the Order Number ---- 
     name_number <- rls |>
       group_by(Name) |>
       mutate(
         # break 1
         Name = as.character(Name),
         Index1 = gregexpr(Name, pattern = ' ')[[1]][1],
-        Number = substr(trimws(Name), Index1 + 1, nchar(Name)),
+        Order_Num = substr(trimws(Name), Index1 + 1, nchar(Name)),
         # break 2
-        Index2 = gregexpr(Number, pattern = ' ')[[1]][1],
-        Number = ifelse(
+        Index2 = gregexpr(Order_Num, pattern = ' ')[[1]][1],
+        Order_Num = ifelse(
           Index2 == -1, 
-          Number, 
-          substr(Number, 1, Index2 - 1) # rtn number
+          Order_Num, 
+          substr(Order_Num, 1, Index2 - 1) # rtn Order_Num
           ),
-        Amend = ifelse(
+        Order_Amendment = ifelse(
           Index2 == -1,
           "",
           substr(Name,
@@ -33,22 +33,27 @@ aogcc_rules_stats <- function(rls){
                  )
         ),
         # break 3
-        Index3 = gregexpr(Amend, pattern = ' ')[[1]][1],
-        Amend_Num = ifelse(
+        Index3 = gregexpr(Order_Amendment, pattern = ' ')[[1]][1],
+        Order_Amendment_Num = ifelse(
           Index3 == -1,
           "",
-          substr(Amend, 
+          substr(Order_Amendment, 
                  gregexpr(Name, pattern = ' ')[[1]][1] + 1,
                  nchar(Name))
         ),
-        Amend = ifelse(
+        Order_Amendment = ifelse(
           Index3 == -1, 
-          Amend, 
-          substr(Amend, 1, Index3 - 1) # rtn number
+          Order_Amendment, 
+          substr(Order_Amendment, 1, Index3 - 1) # rtn Order_Num
         ),
-        Amend_Num = stringr::str_remove(Amend_Num, "^0+"),
-        Amend = stringr::str_remove(Amend, "\\."),
-        Amend = stringr::str_remove(Amend, "^0+")
+        Order_Amendment_Num = stringr::str_remove(Order_Amendment_Num, "^0+"),
+        Order_Amendment = stringr::str_remove(Order_Amendment, "\\."),
+        Order_Amendment = stringr::str_remove(Order_Amendment, "^0+")
       ) |>
-      select(Name, Type, Number, Amend, Amend_Num)
+      select(-Index1, -Index2, -Index3)
+    
+    # Get the word count ----
+    # stats ----
+    
+    return(name_number)
 }
