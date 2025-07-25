@@ -7,10 +7,13 @@ if(exists('aogcc_rules')) {
   aogcc_rules = aogcc_orders_scrape()
 }
 
+# get the order_pages.csv if it exists
+order_pages <- read.csv('order_pages.csv', header = T)
 
-aogcc_rules_stats <- function(rls){
+aogcc_rules_index <- function(rls) {
     # Parse out the Order Number ---- 
     name_number <- rls |>
+      select(Name) |>
       group_by(Name) |>
       mutate(
         # break 1
@@ -50,10 +53,45 @@ aogcc_rules_stats <- function(rls){
         Order_Amendment = stringr::str_remove(Order_Amendment, "\\."),
         Order_Amendment = stringr::str_remove(Order_Amendment, "^0+")
       ) |>
-      select(-Index1, -Index2, -Index3)
+      ungroup() |>
+      select(-Name,-Index1, -Index2, -Index3)
     
     # Get the word count ----
     # stats ----
     
     return(name_number)
 }
+aogcc_rules_counts <- function(rls) {
+  
+  pool_counts <- rls |>
+    select(Name, Fields, Pools) |>
+    mutate(
+      # Identify if Rule applies to Oil or Gas or Both
+      # A comma delimits btw pools (n + 1 = # pools)
+      Pool_Count_0 = ifelse(nchar(Pools) == 0, T, F),
+      Pool_Count = ifelse(Pool_Count_0 == F,
+                          (stringr::str_count(Pools, pattern =',')) + 1,
+                          0),
+      Oil_Pool_Count = (stringr::str_count(Pools, pattern ='OIL')),
+      Gas_Pool_Count = (stringr::str_count(Pools, pattern ='GAS')),
+      # Identify if Rule applies to Different Fields
+      Field_Count_0 = ifelse(nchar(Fields) == 0, T, F),
+      Field_Count = ifelse(Field_Count_0 == F,
+                          (stringr::str_count(Fields, pattern =',')) + 1,
+                          0)
+    ) |>
+    ungroup() |>
+    select(-Name, -Fields, -Pools)
+  
+    return(pool_counts)  
+}
+
+join_rules_df <- function(rls) {
+  index <- aogcc_rules_index(rls)
+  counts <- aogcc_rules_counts(rls)
+  
+  combine_rules_df <- cbind(rls, index, counts)
+  
+  return(combine_rules_df)
+}
+

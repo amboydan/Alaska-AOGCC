@@ -71,16 +71,19 @@ names(df) <- c('Name', 'Active', 'Date',
 df <- df |> 
   #filter(grepl('Hilcorp', Operator)) |> 
   mutate(
-  Name = factor(Name),
-  Type = factor(gsub(' .*', '', Name)),
-  Date = factor(as.Date(Date, '%Y-%m-%d')),
-  Operator = factor(Operator),
-  Active = factor(ifelse(Active == '✓', T, F)),
-  Fields = gsub('\\Pools.*','', Field_Pools),
-  Fields = trimws(gsub('Fields:', '', Fields)),
-  Pools = gsub('.*Pools:', '', Field_Pools),
-  Pools = trimws(gsub('Pools:', '', Pools))
-) |> select(-Field_Pools)
+    Name = factor(Name),
+    Type = factor(gsub(' .*', '', Name)),
+    Date = factor(as.Date(Date, '%Y-%m-%d')),
+    Operator = factor(Operator),
+    Active = factor(ifelse(Active == '✓', T, F)),
+    Fields = gsub('\\Pools.*','', Field_Pools),
+    Fields = trimws(gsub('Fields:', '', Fields)),
+    Pools = gsub('.*Pools:', '', Field_Pools),
+    Pools = trimws(gsub('Pools:', '', Pools))
+  ) |> 
+  filter(!grepl('duplicate', tolower(Name))) |>
+  ungroup() |> 
+  select(-Field_Pools)
 
 return(df)
 }
